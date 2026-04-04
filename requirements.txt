@@ -3,3 +3,4 @@ pymupdf
 uvicorn
 python-multipart
 requests
+os
