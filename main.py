@@ -59,7 +59,7 @@ async def chat_openrouter(req: ChatRequest):
 
 @app.post("/chat-huggingface")
 async def chat_hf(req: ChatRequest):
-    hf_token = os.getenv("HF_TOKEN")
+    hf_token = os.getenv("HUGGINGFACE_API_KEY")
 
     if not hf_token:
         return {"error": "HF_TOKEN not set"}
