@@ -1,12 +1,13 @@
 from fastapi import FastAPI, UploadFile, File
 import fitz  # PyMuPDF
+import requests
 
 app = FastAPI()
 
 # Index route
 @app.get("/")
 def read_root():
-    return {"message": "Hello World"}
+    return {"message": "Hello World"} 
 
 # Extract text from uploaded PDF
 @app.post("/extract")
@@ -21,3 +22,31 @@ async def extract_pdf(file: UploadFile = File(...)):
     pdf.close()
 
     return {"content": text_content}
+
+
+# Chat endpoint
+@app.post("/chat")
+async def chat(prompt: str):
+    url = "https://openrouter.ai/api/v1/chat/completions"
+
+    headers = {
+        "Authorization": "Bearer YOUR_API_KEY",  # 🔴 Replace this
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "mistralai/mistral-7b-instruct",  # free model
+        "messages": [
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+
+    if response.status_code != 200:
+        return {"error": response.text}
+
+    result = response.json()
+    reply = result["choices"][0]["message"]["content"]
+
+    return {"response": reply}
