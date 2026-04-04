@@ -43,7 +43,7 @@ async def chat_openrouter(req: ChatRequest):
             "Content-Type": "application/json"
         },
         json={
-            "model": "mistralai/mistral-7b-instruct",
+            "model": "openrouter/auto",
             "messages": [{"role": "user", "content": req.prompt}]
         },
         timeout=30
@@ -65,7 +65,7 @@ async def chat_hf(req: ChatRequest):
         return {"error": "HF_TOKEN not set"}
 
     response = requests.post(
-        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
+        "https://router.huggingface.co/v1/chat/completions",
         headers={
             "Authorization": f"Bearer {hf_token}"
         },
