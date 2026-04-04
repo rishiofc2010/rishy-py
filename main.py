@@ -26,7 +26,7 @@ async def extract_pdf(file: UploadFile = File(...)):
 
 
 # Chat endpoint
-@app.post("/chat")
+@app.post("/chat-openrouter")
 async def chat(prompt: str):
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -51,3 +51,37 @@ async def chat(prompt: str):
     reply = result["choices"][0]["message"]["content"]
 
     return {"response": reply}
+
+
+
+@app.post("/chat-huggingface")
+async def chat(req: ChatRequest):
+    prompt = req.prompt
+
+    API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+
+    headers = {
+        "Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}",
+    }
+
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 200
+        }
+    }
+
+    response = requests.post(API_URL, headers=headers, json=payload)
+
+    if response.status_code != 200:
+        return {"error": response.text}
+
+    result = response.json()
+
+    # HuggingFace response format handling
+    try:
+        output = result[0]["generated_text"]
+    except:
+        output = str(result)
+
+    return {"response": output}
