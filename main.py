@@ -1,16 +1,20 @@
 from fastapi import FastAPI, UploadFile, File
-import fitz  # PyMuPDF
+from pydantic import BaseModel
+import fitz
 import requests
 import os
 
 app = FastAPI()
 
-# Index route
+class ChatRequest(BaseModel):
+    prompt: str
+
+
 @app.get("/")
 def read_root():
-    return {"message": "Hello World"} 
+    return {"message": "Hello World"}
 
-# Extract text from uploaded PDF
+
 @app.post("/extract")
 async def extract_pdf(file: UploadFile = File(...)):
     if not file.filename.endswith(".pdf"):
@@ -25,60 +29,58 @@ async def extract_pdf(file: UploadFile = File(...)):
     return {"content": text_content}
 
 
-# Chat endpoint
 @app.post("/chat-openrouter")
-async def chat(prompt: str):
-    url = "https://openrouter.ai/api/v1/chat/completions"
+async def chat_openrouter(req: ChatRequest):
+    api_key = os.getenv("OPENROUTER_API_KEY")
 
-    headers = {
-        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-        "Content-Type": "application/json"
-    }
+    if not api_key:
+        return {"error": "OPENROUTER_API_KEY not set"}
 
-    data = {
-        "model": "mistralai/mistral-7b-instruct",  # free model
-        "messages": [
-            {"role": "user", "content": prompt}
-        ]
-    }
-
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "mistralai/mistral-7b-instruct",
+            "messages": [{"role": "user", "content": req.prompt}]
+        },
+        timeout=30
+    )
 
     if response.status_code != 200:
         return {"error": response.text}
 
-    result = response.json()
-    reply = result["choices"][0]["message"]["content"]
-
-    return {"response": reply}
-
+    return {
+        "response": response.json()["choices"][0]["message"]["content"]
+    }
 
 
 @app.post("/chat-huggingface")
-async def chat(req: ChatRequest):
-    prompt = req.prompt
+async def chat_hf(req: ChatRequest):
+    hf_token = os.getenv("HF_TOKEN")
 
-    API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+    if not hf_token:
+        return {"error": "HF_TOKEN not set"}
 
-    headers = {
-        "Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY')}",
-    }
-
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 200
-        }
-    }
-
-    response = requests.post(API_URL, headers=headers, json=payload)
+    response = requests.post(
+        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
+        headers={
+            "Authorization": f"Bearer {hf_token}"
+        },
+        json={
+            "inputs": req.prompt,
+            "parameters": {"max_new_tokens": 200}
+        },
+        timeout=30
+    )
 
     if response.status_code != 200:
         return {"error": response.text}
 
     result = response.json()
 
-    # HuggingFace response format handling
     try:
         output = result[0]["generated_text"]
     except:
