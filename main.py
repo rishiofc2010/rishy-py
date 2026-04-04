@@ -61,9 +61,6 @@ async def chat_openrouter(req: ChatRequest):
 async def chat_hf(req: ChatRequest):
     hf_token = os.getenv("HUGGINGFACE_API_KEY")
 
-    if not hf_token:
-        return {"error": "HF_TOKEN not set"}
-
     response = requests.post(
         "https://router.huggingface.co/v1/chat/completions",
         headers={
@@ -71,7 +68,7 @@ async def chat_hf(req: ChatRequest):
             "Content-Type": "application/json"
         },
         json={
-            "model": "HuggingFaceH4/zephyr-7b-beta",
+            "model": "google/flan-t5-large",
             "messages": [
                 {"role": "user", "content": req.prompt}
             ]
@@ -79,11 +76,4 @@ async def chat_hf(req: ChatRequest):
         timeout=30
     )
 
-    if response.status_code != 200:
-        return {"error": response.text}
-
-    result = response.json()
-
-    return {
-        "response": result["choices"][0]["message"]["content"]
-    }
+    return response.json()
