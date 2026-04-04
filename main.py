@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
 import fitz  # PyMuPDF
 import requests
+import os
 
 app = FastAPI()
 
@@ -30,7 +31,7 @@ async def chat(prompt: str):
     url = "https://openrouter.ai/api/v1/chat/completions"
 
     headers = {
-        "Authorization": "Bearer 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",  # 🔴 Replace this
+        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
         "Content-Type": "application/json"
     }
 
