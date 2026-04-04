@@ -30,7 +30,7 @@ async def chat(prompt: str):
     url = "https://openrouter.ai/api/v1/chat/completions"
 
     headers = {
-        "Authorization": "Bearer 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",  # 🔴 Replace this
+        "Authorization": "Bearer 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",  # 🔴 Replace this
         "Content-Type": "application/json"
     }
 
