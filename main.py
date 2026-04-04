@@ -59,17 +59,40 @@ async def chat_openrouter(req: ChatRequest):
 
 @app.post("/chat-huggingface")
 async def chat_hf(req: ChatRequest):
-    hf_token = os.getenv("HUGGINGFACE_API_KEY")
+    # Use the environment variable name you have set
+    hf_token = os.getenv("HUGGINGFACE_API_KEY") 
+    
+    # 2026 Standard: Use the V1 Chat Router
+    # This is OpenAI-compatible and works for free-tier users
+    url = "https://router.huggingface.co/v1/chat/completions"
+    
+    # Selecting a modern model that supports the Chat format
+    model_id = "meta-llama/Llama-3.2-3B-Instruct"
 
-    response = requests.post(
-        "https://api-inference.huggingface.co/models/google/flan-t5-large",
-        headers={
-            "Authorization": f"Bearer {hf_token}"
-        },
-        json={
-            "inputs": req.prompt
-        },
-        timeout=30
-    )
+    payload = {
+        "model": model_id,
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": req.prompt}
+        ],
+        "max_tokens": 500,
+        "temperature": 0.7
+    }
 
-    return response.json()
+    headers = {
+        "Authorization": f"Bearer {hf_token}",
+        "Content-Type": "application/json"
+    }
+
+    # Using 'requests' as per your imports
+    # Note: In a production async app, 'httpx' is better, 
+    # but 'requests' works fine for learning!
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response.raise_for_status() # Raises error for 4xx or 5xx responses
+        
+        data = response.json()
+        return {"reply": data["choices"][0]["message"]["content"]}
+        
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}
