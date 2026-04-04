@@ -62,16 +62,12 @@ async def chat_hf(req: ChatRequest):
     hf_token = os.getenv("HUGGINGFACE_API_KEY")
 
     response = requests.post(
-        "https://router.huggingface.co/v1/chat/completions",
+        "https://api-inference.huggingface.co/models/google/flan-t5-large",
         headers={
-            "Authorization": f"Bearer {hf_token}",
-            "Content-Type": "application/json"
+            "Authorization": f"Bearer {hf_token}"
         },
         json={
-            "model": "google/flan-t5-large",
-            "messages": [
-                {"role": "user", "content": req.prompt}
-            ]
+            "inputs": req.prompt
         },
         timeout=30
     )
