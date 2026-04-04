@@ -67,11 +67,14 @@ async def chat_hf(req: ChatRequest):
     response = requests.post(
         "https://router.huggingface.co/v1/chat/completions",
         headers={
-            "Authorization": f"Bearer {hf_token}"
+            "Authorization": f"Bearer {hf_token}",
+            "Content-Type": "application/json"
         },
         json={
-            "inputs": req.prompt,
-            "parameters": {"max_new_tokens": 200}
+            "model": "HuggingFaceH4/zephyr-7b-beta",
+            "messages": [
+                {"role": "user", "content": req.prompt}
+            ]
         },
         timeout=30
     )
@@ -81,9 +84,6 @@ async def chat_hf(req: ChatRequest):
 
     result = response.json()
 
-    try:
-        output = result[0]["generated_text"]
-    except:
-        output = str(result)
-
-    return {"response": output}
+    return {
+        "response": result["choices"][0]["message"]["content"]
+    }
